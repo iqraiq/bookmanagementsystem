@@ -1,5 +1,8 @@
 # Book Management System
-###### Initial setup HTML, CSS, and Flask
+## Initial setup HTML, CSS, and Flask
+   ##### pip install flask
+   ##### admin.html,add-book html.
+   ##### backned.py
 ###### Created basic Home Page with a table to display books
 ###### Added 'Add Book' button to navigate to Add Book Page
 ###### Created Add Book Page with form to input book details
