@@ -1,0 +1,111 @@
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+import pyodbc
+
+app = Flask(__name__)
+CORS(app)
+
+# SQL Server Database Configuration
+DB_CONFIG = {
+    'server': 'IQ\\SQLEXPRESS01',
+    'database': 'BookstoreDB',
+}
+
+# Connection string (using SQL Server driver)
+CONNECTION_STRING = (
+    f"DRIVER={{SQL Server}};"
+    f"SERVER={DB_CONFIG['server']};"
+    f"DATABASE={DB_CONFIG['database']};"
+    "Trusted_Connection=yes;"
+)
+
+# Function to get database connection
+def get_db_connection():
+    connection = pyodbc.connect(CONNECTION_STRING)
+    return connection
+
+# API Endpoints
+
+# Get all books
+@app.route('/books', methods=['GET'])
+def get_books():
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM Books")
+    columns = [column[0] for column in cursor.description]
+    books = [dict(zip(columns, row)) for row in cursor.fetchall()]
+    cursor.close()
+    connection.close()
+    return jsonify(books)
+
+# Get a specific book by ID
+@app.route('/books/<int:book_id>', methods=['GET'])
+def get_book(book_id):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM Books WHERE BooKID = ?", (book_id,))
+    row = cursor.fetchone()
+    if row:
+        columns = [column[0] for column in cursor.description]
+        book = dict(zip(columns, row))
+    else:
+        book = {"error": "Book not found"}
+    cursor.close()
+    connection.close()
+    return jsonify(book)
+
+# Create a new book
+@app.route('/books', methods=['POST'])
+def create_book():
+    data = request.json
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    query = """
+        INSERT INTO Books (Title, Author, Genre, Price, Stock)
+        VALUES (?, ?, ?, ?, ?)
+    """
+    cursor.execute(query, (data['Title'], data['Author'], data.get('Genre', ''), data.get('Price', 0), data.get('Stock', 0)))
+    connection.commit()
+    new_id = cursor.execute("SELECT @@IDENTITY").fetchone()[0]
+    cursor.close()
+    connection.close()
+    return jsonify({"message": "Book added successfully", "id": new_id}), 201
+
+# Update a book's details by ID
+@app.route('/books/<int:book_id>', methods=['PUT'])
+def update_book(book_id):
+    data = request.json
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    query = """
+        UPDATE Books
+        SET Title = ?, Author = ?, Genre = ?, Price = ?, Stock = ?
+        WHERE BooKID = ?
+    """
+    cursor.execute(query, (data['Title'], data['Author'], data.get('Genre', ''), data.get('Price', 0), data.get('Stock', 0), book_id))
+    connection.commit()
+    if cursor.rowcount == 0:
+        cursor.close()
+        connection.close()
+        return jsonify({"error": "Book not found"}), 404
+    cursor.close()
+    connection.close()
+    return jsonify({"message": "Book updated successfully"}), 200
+
+# Delete a book by ID
+@app.route('/books/<int:book_id>', methods=['DELETE'])
+def delete_book(book_id):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute("DELETE FROM Books WHERE BooKID = ?", (book_id,))
+    connection.commit()
+    if cursor.rowcount == 0:
+        cursor.close()
+        connection.close()
+        return jsonify({"error": "Book not found"}), 404
+    cursor.close()
+    connection.close()
+    return jsonify({"message": "Book deleted successfully"}), 200
+
+if __name__ == '__main__':
+    app.run(debug=True)

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookstore Management - Add Book</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .form-container {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .form-container h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .form-container label {
+            display: inline-block;
+            width: 120px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .form-container input {
+            width: calc(100% - 130px);
+            margin-bottom: 12px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            text-align: center;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        /* Modal Styling (if needed later) */
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Bookstore Management System</h1>
+    </header>
+
+    <div class="container">
+        <div class="form-container">
+            <h3>Add Book</h3>
+            <label for="title">Title:</label>
+            <input type="text" id="title" placeholder="Enter book title"><br>
+            <label for="author">Author:</label>
+            <input type="text" id="author" placeholder="Enter author's name"><br>
+            <label for="genre">Genre:</label>
+            <input type="text" id="genre" placeholder="Enter genre"><br>
+            <label for="price">Price:</label>
+            <input type="number" id="price" placeholder="Enter price"><br>
+            <label for="stock">Stock:</label>
+            <input type="number" id="stock" placeholder="Enter stock"><br>
+            <button onclick="addBook()">Add Book</button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:5000/books';
+
+        // Add a new book
+        function addBook() {
+            const title = document.getElementById('title').value;
+            const author = document.getElementById('author').value;
+            const genre = document.getElementById('genre').value;
+            const price = document.getElementById('price').value;
+            const stock = document.getElementById('stock').value;
+
+            fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ Title: title, Author: author, Genre: genre, Price: price, Stock: stock })
+            })
+            .then(response => response.json())
+            .then(() => {
+                alert('Book added successfully!');
+                window.location.href = 'admin.html'; // Redirect to List Books page after adding the book
+            })
+            .catch(error => console.error('Error adding book:', error));
+        }
+    </script>
+</body>
+</html>

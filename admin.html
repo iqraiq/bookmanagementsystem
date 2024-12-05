@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookstore Management - List Books</title>
+    <style>
+        /* General Styling */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        header {
+            background-color: #388E3C; /* Green header */
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            font-weight: 600; /* Slightly increased weight for emphasis */
+        }
+
+        .container {
+            margin: 20px;
+        }
+
+        h1, h3 {
+            margin: 0;
+            padding: 0;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50; /* Green button */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+
+        button:hover {
+            background-color: #45a049; /* Darker green on hover */
+        }
+
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #388E3C; /* Green table header */
+            color: white;
+        }
+
+        .action-buttons button {
+            padding: 5px 10px;
+            margin: 0 5px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .edit {
+            background-color: #2196F3; /* Blue Edit button */
+        }
+
+        .delete {
+            background-color: #F44336; /* Red Delete button */
+        }
+
+        .action-buttons button:hover {
+            opacity: 0.8;
+        }
+
+        /* Modal Styling */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 40%;
+        }
+
+        .close {
+            color: #388E3C; /* Green close button */
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .modal button {
+            background-color: #4CAF50; /* Green modal button */
+            border: none;
+            padding: 10px 15px;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .modal button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Bookstore Management System</h1>
+    </header>
+
+    <div class="container">
+        <h3>Books List</h3>
+        <button onclick="window.location.href = 'add-book.html';">Add New Book</button>
+
+        <table id="booksTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>Genre</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal for editing a book -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h3>Edit Book</h3>
+            <input type="text" id="editTitle" placeholder="Book Title">
+            <input type="text" id="editAuthor" placeholder="Book Author">
+            <input type="text" id="editGenre" placeholder="Book Genre">
+            <input type="number" id="editPrice" placeholder="Book Price">
+            <input type="number" id="editStock" placeholder="Book Stock">
+            <button onclick="updateBook()">Update Book</button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:5000/books';
+        let editingBookId = null;
+
+        // Fetch and display books
+        function fetchBooks() {
+            fetch(API_URL)
+                .then(response => response.json())
+                .then(books => {
+                    const tableBody = document.querySelector('#booksTable tbody');
+                    tableBody.innerHTML = '';
+                    books.forEach(book => {
+                        const row = `
+                            <tr>
+                                <td>${book.BookID}</td>
+                                <td>${book.Title}</td>
+                                <td>${book.Author}</td>
+                                <td>${book.Genre}</td>
+                                <td>${book.Price}</td>
+                                <td>${book.Stock}</td>
+                                <td class="action-buttons">
+                                    <button class="edit" onclick="openModal(${book.BookID})">Edit</button>
+                                    <button class="delete" onclick="deleteBook(${book.BookID})">Delete</button>
+                                </td>
+                            </tr>
+                        `;
+                        tableBody.innerHTML += row;
+                    });
+                })
+                .catch(error => console.error('Error fetching books:', error));
+        }
+
+        // Open Modal and populate form with book data
+        function openModal(bookId) {
+            editingBookId = bookId;
+
+            fetch(`${API_URL}/${bookId}`)
+                .then(response => response.json())
+                .then(book => {
+                    document.getElementById('editTitle').value = book.Title;
+                    document.getElementById('editAuthor').value = book.Author;
+                    document.getElementById('editGenre').value = book.Genre;
+                    document.getElementById('editPrice').value = book.Price;
+                    document.getElementById('editStock').value = book.Stock;
+
+                    // Show the modal
+                    document.getElementById('editModal').style.display = "block";
+                })
+                .catch(error => console.error('Error fetching book details:', error));
+        }
+
+        // Close Modal
+        function closeModal() {
+            document.getElementById('editModal').style.display = "none";
+        }
+
+        // Update Book data
+        function updateBook() {
+            const title = document.getElementById('editTitle').value;
+            const author = document.getElementById('editAuthor').value;
+            const genre = document.getElementById('editGenre').value;
+            const price = document.getElementById('editPrice').value;
+            const stock = document.getElementById('editStock').value;
+
+            fetch(`${API_URL}/${editingBookId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    Title: title,
+                    Author: author,
+                    Genre: genre,
+                    Price: price,
+                    Stock: stock
+                })
+            })
+            .then(response => response.json())
+            .then(() => {
+                alert('Book updated successfully!');
+                fetchBooks(); // Refresh the books list
+                closeModal(); // Close the modal
+            })
+            .catch(error => console.error('Error updating book:', error));
+        }
+
+        // Delete book
+        function deleteBook(id) {
+            if (confirm('Are you sure you want to delete this book?')) {
+                fetch(`${API_URL}/${id}`, { method: 'DELETE' })
+                    .then(response => response.json())
+                    .then(() => {
+                        alert('Book deleted successfully!');
+                        fetchBooks();
+                    })
+                    .catch(error => console.error('Error deleting book:', error));
+            }
+        }
+
+        // Initialize
+        window.onload = function() {
+            fetchBooks();
+        }
+    </script>
+</body>
+</html>
